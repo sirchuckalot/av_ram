@@ -19,23 +19,24 @@
 module av_ram
  #(//Wishbone parameters
    parameter dw = 32,
+   parameter burstw = 8,
    //Memory parameters
    parameter depth = 256,
    parameter aw    = $clog2(depth),
    parameter memfile = "")
-  (input 	          av_clk_i,
-   input 	          av_rst_i,
+  (input 	           av_clk_i,
+   input 	           av_rst_i,
 
-   input [aw-1:0]     av_address_i,
-   input [dw-1:0]     av_writedata_i,
-   input [(dw/8)-1:0] av_byteenable_i,
-   input [2:0]        av_burstcount_i,
-   input              av_write_i,
-   input              av_read_i,
+   input [aw-1:0]      av_address_i,
+   input [dw-1:0]      av_writedata_i,
+   input [(dw/8)-1:0]  av_byteenable_i,
+   input [burstw-1:0]  av_burstcount_i,
+   input               av_write_i,
+   input               av_read_i,
    
-   output reg 	      av_waitrequest_o,
-   output [1:0]       av_response_o,
-   output [dw-1:0]    av_readdata_o);
+   output reg 	       av_waitrequest_o,
+   output [1:0]        av_response_o,
+   output [dw-1:0]     av_readdata_o);
 
    `include "av_common.v"
 
@@ -60,14 +61,35 @@ module av_ram
             is_last_r <= 1'b0;
         end
         else begin
-            if (valid & (burstcount != 2'b00)) begin
-                burstcount <= (burstcount - 1);
-                is_last_r <= 1'b0;
+            // These are the only conditions when we load new burst request:
+            // valid
+            // burst count is zero
+            // burst request greater than zero
+            if (valid & (burstcount == 0) & (av_burstcount_i > 0) ) begin
+                // In this case, we are the first and last cycle
+                is_last_r <= 1'b1;
+                
+                burstcount <= av_burstcount_i;
             end
             else begin
-                burstcount <= av_burstcount_i;
-                is_last_r <= 1'b1;
+                
             end
+            
+            
+            else begin
+                if (valid 
+            end
+            else begin
+                // if count zero
+                if ( (burstcount == 0) | (av_curstcount_i == 0) ) begin
+                    is_last_r <= 1'b1;
+                end 
+                else begin
+                    burstcount <= (burstcount - 1);
+                end
+            end
+            // Last only occurs when classic or count
+            if 
         end
     end
     
